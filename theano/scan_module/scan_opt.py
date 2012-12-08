@@ -838,9 +838,8 @@ class ScanSaveMem(gof.Optimizer):
                         nw_pos = compress_map[idx]
                         old_new += [(o, new_outs[nw_pos])]
 
-                remove = [ x[0].owner for x in old_new]
-                fgraph.replace_all_validate_remove(old_new,
-                                                   remove=remove,
+                remove = [old.owner for old,new in old_new]
+                fgraph.replace_all_validate_remove(old_new, remove,
                                                    reason='scan_save_mem')
 
     def apply(self, fgraph):
