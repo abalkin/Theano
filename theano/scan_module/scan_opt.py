@@ -840,7 +840,7 @@ class ScanSaveMem(gof.Optimizer):
 
                 remove = [ x[0].owner for x in old_new]
                 fgraph.replace_all_validate_remove(old_new,
-                                                   remove,
+                                                   remove=remove,
                                                    reason='scan_save_mem')
 
     def apply(self, fgraph):
