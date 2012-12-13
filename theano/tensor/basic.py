@@ -589,7 +589,7 @@ def get_constant_value(v):
                     v.owner.op.idx_list[0]]:
                     return numpy.asarray(1)
 
-    raise TypeError(v)
+    raise NotConstantError(v)
 
 
 class TensorType(Type):
@@ -736,7 +736,7 @@ class TensorType(Type):
             except AttributeError:
                 msg = ""
             raise TypeError("The numpy.ndarray object is not aligned."
-                            " Theano c code do not support that.",
+                            " Theano C code does not support that.",
                             msg,
                             "object shape", data.shape,
                             "object strides", data.strides)
@@ -2388,8 +2388,8 @@ class SpecifyShape(Op):
 
     def c_code(self, node, nodename, inp, out, sub):
         if not isinstance(node.inputs[0], TensorVariable):
-            # The c code bellow support only Tensor.  super.c_code
-            # will raise an exception to tell that there isn't c code
+            # The C code below supports only Tensor.  super.c_code
+            # will raise an exception to tell that there is no C code
             # for the other cases.
             return super(SpecifyShape, self).c_code(node, nodename,
                                                     inp, out, sub)
@@ -2400,8 +2400,8 @@ class SpecifyShape(Op):
         return """
         if (PyArray_NDIM(%(iname)s) != PyArray_DIMS(%(shape)s)[0]) {
             PyErr_Format(PyExc_AssertionError,
-                         "SpecifyShape: vector of shape have %%d element,"
-                         " but the input have %%d dimensions.",
+                         "SpecifyShape: vector of shape has %%d elements,"
+                         " but the input has %%d dimensions.",
                          PyArray_NDIM(%(iname)s),
                          PyArray_DIMS(%(shape)s)[0]);
             %(fail)s;
@@ -2411,7 +2411,7 @@ class SpecifyShape(Op):
                                                                      i))[0];
             if (PyArray_DIMS(%(iname)s)[i] != shp) {
                 PyErr_Format(PyExc_AssertionError,
-                             "SpecifyShape: dim %%d of input have shape %%d,"
+                             "SpecifyShape: dim %%d of input has shape %%d,"
                              " expected %%d.",
                              i, PyArray_DIMS(%(iname)s)[i],
                              shp);
@@ -7298,10 +7298,14 @@ class Diagonal(Op):
         self.axis2 = axis2
  
     def __eq__(self, other):
-        return (type(self) == type(other))
+        return (type(self) == type(other) and
+                self.offset == other.offset and
+                self.axis1 == other.axis1 and
+                self.axis2 == other.axis2)
 
     def __hash__(self):
-        return hash(type(self))
+        return (hash(type(self)) ^ hash(self.offset) ^
+                hash(self.axis1) ^ hash(self.axis2))
 
     def make_node(self, x):
         x = as_tensor_variable(x)
